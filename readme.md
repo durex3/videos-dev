@@ -12,6 +12,7 @@
 - 持久层框架：MyBatis 3 tk.mybatis 1.2.4 pagehelper 1.2.3
 - 数据库连接池：HikariCP
 - 日志管理：Log4j
+- 视频截图 javacv-platform 1.3.1
 - 其他：lombok 1.18.8 jsr303 swagger2 2.4.0
 ### 开发环境
 - IDE：idea

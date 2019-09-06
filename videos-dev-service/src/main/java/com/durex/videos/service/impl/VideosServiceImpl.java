@@ -6,6 +6,7 @@ import com.durex.videos.mapper.VideosMapper;
 import com.durex.videos.pojo.Videos;
 import com.durex.videos.service.VideosService;
 import com.durex.videos.utils.BeanValidator;
+import com.durex.videos.utils.VideosUtil;
 import com.durex.videos.vo.PageResult;
 import com.durex.videos.vo.VideosVo;
 import com.github.pagehelper.PageHelper;
@@ -21,8 +22,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 /**
  * @author gelong
@@ -35,8 +38,6 @@ public class VideosServiceImpl implements VideosService {
     private String fileRootPath;
     @Value("${videos-relative-path}")
     private String videosRelativePath;
-    @Value("${videos-cover-path}")
-    private String videosCoverPath;
     @Value("${max-video-seconds}")
     Float maxVideoSeconds;
     @Value("${min-video-seconds}")
@@ -56,11 +57,20 @@ public class VideosServiceImpl implements VideosService {
         if (StringUtils.isBlank(filename)) {
             throw new VideosException("视频非法");
         }
-        // 设置数据库保存的路径
+        // 视频的相对路径
         String videoPath = videosRelativePath + userId + "/" + filename;
+        // 视频封面图保存的相对路径
+        String videoCoverRelativePathPath = videosRelativePath + userId + "/";
+        // 随机生成视频封面图的文件名
+        String videoCoverName = getRandomFileName();
+        // 视频封面图的相对路径
+        String videoCoverPath = videosRelativePath + userId + "/" + videoCoverName + ".jpg";
         try {
+            // 上传视频
             uploadVideo(videosDto.getFile().getInputStream(), fileRootPath + videoPath);
-        } catch (IOException e) {
+            // 生成视频封面图（jpg）
+            VideosUtil.randomGrabberFfmpegImage(fileRootPath + videoPath, fileRootPath + videoCoverRelativePathPath, videoCoverName);
+        } catch (Exception e) {
             e.printStackTrace();
             throw new VideosException("上传视频出错");
         }
@@ -70,7 +80,7 @@ public class VideosServiceImpl implements VideosService {
         videos.setUserId(userId);
         videos.setVideoPath(videoPath);
         videos.setLikeCounts(0L);
-        videos.setCoverPath(videosCoverPath);
+        videos.setCoverPath(videoCoverPath);
         videos.setAudioId(null);
         videos.setCreateTime(new Date());
         videos.setStatus(1);
@@ -130,4 +140,18 @@ public class VideosServiceImpl implements VideosService {
                 .rows(list)
                 .build();
     }
+
+    /**
+     * 按当前时间随机生成文件名
+     * @return String
+     */
+    private static String getRandomFileName() {
+        SimpleDateFormat simpleDateFormat;
+        simpleDateFormat = new SimpleDateFormat("yyyyMMdd");
+        Date date = new Date();
+        String str = simpleDateFormat.format(date);
+        Random random = new Random();
+        return str + (int)(random.nextDouble() * 10000);
+    }
+
 }
